@@ -57,6 +57,8 @@ async function getCardPrintings(cardName) {
 
     const printsData = await printsResponse.json();
     for (const print of printsData.data) {
+      const isMtgoOnly = print.games?.includes('mtgo') && !print.games.includes('paper');
+      if (print.set === 'plst' || print.digital || isMtgoOnly) continue;
       if (!sets.has(print.set)) {
         sets.set(print.set, {
           setName: print.set_name,
@@ -126,17 +128,19 @@ export async function main() {
   const report = [
     '# Report delle espansioni MTG',
     '',
-    // '## Espansioni per carta',
-    // '',
-    // ...cardResults.flatMap(({ card, sets, error }) => [
-    //   `### ${card}`,
-    //   ...(error
-    //     ? [`- Errore: ${error}`]
-    //     : sets.length > 0
-    //       ? sets.map(set => `- ${set.setName} (\`${set.setCode}\`, ${set.releasedAt})`)
-    //       : ['- Nessuna espansione trovata']),
-    //   ''
-    // ]),
+    'Esclusi The List (plst) e le stampe solo digitali/MTGO.',
+    '',
+    '## Espansioni per carta',
+    '',
+    ...cardResults.flatMap(({ card, sets, error }) => [
+      `### ${card}`,
+      ...(error
+        ? [`- Errore: ${error}`]
+        : sets.length > 0
+          ? sets.map(set => `- ${set.setName} (\`${set.setCode}\`, ${set.releasedAt})`)
+          : ['- Nessuna espansione trovata']),
+      ''
+    ]),
     '## Classifica per espansione',
     '',
     ...(ranking.length > 0

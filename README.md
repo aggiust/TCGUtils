@@ -21,6 +21,25 @@ npm start
 
 Quando compare il menu, inserisci `1` o `2` e premi Invio. In alternativa, avvia direttamente un servizio con `npm start -- mtg` oppure `npm start -- ygo`. Per il servizio MTG, modifica prima `files/cards.txt`, inserendo una carta per riga; per Yu-Gi-Oh!, modifica `files/ydke-code.txt`, inserendo un ID per riga.
 
+## Frontend web
+
+Avvia l'interfaccia Vue in locale con:
+
+```sh
+npm install
+npm run dev
+```
+
+Il frontend permette di selezionare MTG o Yu-Gi-Oh!, incollare una lista oppure caricare un file `.txt`, generare un report e scaricarlo. Per MTG la pagina mostra solo la classifica, mentre il file scaricato include anche le ristampe per carta; vengono esclusi `plst` (The List) e le stampe solo digitali/MTGO. Per Yu-Gi-Oh! inserisci un ID numerico per riga: non accetta stringhe YDKE codificate con prefisso `ydke://`. Le richieste alle API partono direttamente dal browser e il progetto non carica i dati dell'utente su un server.
+
+Per la build pubblicabile su Netlify:
+
+```sh
+npm run build
+```
+
+La configurazione in `netlify.toml` usa `npm run build` e pubblica la cartella `dist`.
+
 ## Avvio con Docker
 
 ```sh
