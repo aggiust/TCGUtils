@@ -4,7 +4,7 @@ TODO:
 3) Test su android
 
 
-# MTG Commander Analyzer tools
+# TCG Utils tools
 
 Il progetto include due servizi, selezionabili dal menu:
 
