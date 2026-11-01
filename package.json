@@ -2,15 +2,12 @@
   "name": "mtgcommanderanalyzer",
   "version": "1.0.0",
   "description": "mtg analyzer",
-  "main": "index.js",
+  "main": "src/index.js",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node src/index.js"
   },
   "author": "aggiusti",
   "license": "ISC",
-  "dependencies": {
-    "puppeteer": "^24.10.2",
-    "xlsx": "^0.18.5"
-  }
+  "dependencies": {}
 }

@@ -1,95 +1,78 @@
-const cardIds = [
-'47297616',
-'47297616',
-'47084486',
-'09748752',
-'09748752',
-'09748752',
-'73125233',
-'73125233',
-'73125233',
-'81278754',
-'20663556',
-'20663556',
-'20663556',
-'46239604',
-'46239604',
-'46239604',
-'09126351',
-'09126351',
-'09126351',
-'56052205',
-'12538374',
-'12538374',
-'44330098',
-'96947648',
-'96947648',
-'87910978',
-'68005187',
-'68005187',
-'68005187',
-'98045062',
-'05318639',
-'19613556',
-'63356631',
-'63356631',
-'04178474',
-'04178474',
-'53582587',
-'06540606',
-'06540606',
-'64697231',
-'23693634',
-'70780151',
-'88643579',
-'44508094',
-'73580471',
-'07391448',
-'50321796',
-'53714009',
-'43385557',
-'26593852',
-'29071332',
-'40854197',
-'79229522',
-'79229522',
-'79229522',
-'47084486',
-'47084486',
-'26205777',
-'70095154',
-'70095154',
-'88240808',
-'88240808',
-'71413901',
-'21502796',
-'21502796',
-'60082869',
-'60082869',
-'29401950',
-'29401950',
-'44095762'
-];
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+
+const projectDirectory = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const codesFile = path.join(projectDirectory, 'files', 'ydke-code.txt');
+const outputFile = path.join(projectDirectory, 'results', 'ydke-cards.txt');
 
 async function fetchCardName(id) {
-  const url = `https://db.ygoprodeck.com/api/v7/cardinfo.php?id=${id}`;
-  try {
-    const response = await fetch(url);
-    if (!response.ok) throw new Error(`Errore HTTP ${response.status}`);
-    const data = await response.json();
-    // L’API restituisce un array di carte, prendiamo la prima
-    return data.data[0].name;
-  } catch (err) {
-    console.error(`Errore con ID ${id}:`, err.message);
-    return null;
+  const url = `https://db.ygoprodeck.com/api/v7/cardinfo.php?id=${encodeURIComponent(id)}`;
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Errore HTTP ${response.status} ${response.statusText}`);
   }
+
+  const data = await response.json();
+  const cardName = data.data?.[0]?.name;
+  if (!cardName) {
+    throw new Error('La risposta API non contiene il nome della carta');
+  }
+  return cardName;
 }
 
-async function main() {
+export async function main() {
+  const fileContent = fs.readFileSync(codesFile, 'utf-8');
+  const cardIds = fileContent
+    .split(/\r?\n/)
+    .map(line => line.trim())
+    .filter(Boolean);
+
+  if (cardIds.length === 0) {
+    throw new Error(`${codesFile} non contiene codici carta`);
+  }
+
+  const namesById = new Map();
+  const failures = [];
+
   for (const id of cardIds) {
-    const name = await fetchCardName(id);
-    console.log(`${id} → ${name}`);
+    if (namesById.has(id)) continue;
+
+    try {
+      namesById.set(id, await fetchCardName(id));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      failures.push({ id, message });
+    }
   }
+
+  if (failures.length > 0) {
+    for (const { id, message } of failures) {
+      console.error(`Errore con ID ${id}: ${message}`);
+    }
+    throw new Error(`${failures.length} codici non sono stati convertiti; il file di output non è stato aggiornato`);
+  }
+
+  const countsByName = new Map();
+  for (const id of cardIds) {
+    const name = namesById.get(id);
+    countsByName.set(name, (countsByName.get(name) ?? 0) + 1);
+  }
+
+  const output = Array.from(countsByName, ([name, count]) =>
+    `${count > 1 ? `${count}x ` : ''}${name}`
+  ).join('\n') + '\n';
+
+  fs.mkdirSync(path.dirname(outputFile), { recursive: true });
+  fs.writeFileSync(outputFile, output, 'utf-8');
+
+  console.log(`Convertite ${cardIds.length} carte (${countsByName.size} nomi univoci).`);
+  console.log(`Lista salvata in: ${outputFile}`);
 }
 
-main()
+if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
+  main().catch(error => {
+    console.error('Errore durante la conversione:', error.message);
+    process.exitCode = 1;
+  });
+}

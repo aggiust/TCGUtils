@@ -5,6 +5,6 @@ services:
     build: .
     container_name: node-app
     volumes:
-      - ./results:/app/results
-    # Se vuoi vedere i log in tempo reale
+      - ./files:/app/files:ro
+    stdin_open: true
     tty: true
